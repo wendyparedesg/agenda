@@ -596,14 +596,49 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-h
 
 <!-- MODAL EVENTO -->
 <div class="overlay" id="evmodal">
-  <div class="modal">
+  <div class="modal" style="max-width:440px;">
     <h3>📌 Nuevo Evento</h3>
-    <div class="fg"><label class="fl">Título</label><input class="fin" id="evt" placeholder="Descripción"/></div>
+    <div class="fg"><label class="fl">Título</label><input class="fin" id="evt" placeholder="Nombre del evento"/></div>
     <div class="fg"><label class="fl">Fecha</label><input class="fin" type="date" id="evd"/></div>
-    <div class="fg"><label class="fl">Hora</label><input class="fin" type="time" id="evh"/></div>
+    <div class="fg" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div><label class="fl">Hora inicio</label><input class="fin" type="time" id="evh"/></div>
+      <div><label class="fl">Hora fin</label><input class="fin" type="time" id="evhend"/></div>
+    </div>
+    <div class="fg">
+      <label class="fl">🎨 Categoría (color)</label>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:4px;" id="catGrid">
+        <div class="cat-opt" data-cat="dios" data-color="#D4BAFF" data-gcal="9" onclick="selCat(this)" style="background:linear-gradient(135deg,#D4BAFF,#BAE1FF);border-radius:10px;padding:8px 10px;cursor:pointer;border:2px solid transparent;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;">🙏 Dios & Fe</div>
+        <div class="cat-opt" data-cat="familia" data-color="#FFB3D9" data-gcal="4" onclick="selCat(this)" style="background:linear-gradient(135deg,#FFB3D9,#FFDAC1);border-radius:10px;padding:8px 10px;cursor:pointer;border:2px solid transparent;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;">❤️ Familia</div>
+        <div class="cat-opt" data-cat="trabajo" data-color="#BAE1FF" data-gcal="7" onclick="selCat(this)" style="background:linear-gradient(135deg,#BAE1FF,#BAFFC9);border-radius:10px;padding:8px 10px;cursor:pointer;border:2px solid transparent;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;">🏢 Oceanica</div>
+        <div class="cat-opt" data-cat="yo" data-color="#FFFFBA" data-gcal="5" onclick="selCat(this)" style="background:linear-gradient(135deg,#FFFFBA,#FFDAC1);border-radius:10px;padding:8px 10px;cursor:pointer;border:2px solid transparent;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;">👑 Yo & Salud</div>
+        <div class="cat-opt" data-cat="finanzas" data-color="#BAFFC9" data-gcal="10" onclick="selCat(this)" style="background:linear-gradient(135deg,#BAFFC9,#BAE1FF);border-radius:10px;padding:8px 10px;cursor:pointer;border:2px solid transparent;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;">💰 Finanzas</div>
+        <div class="cat-opt" data-cat="personal" data-color="#FFDAC1" data-gcal="6" onclick="selCat(this)" style="background:linear-gradient(135deg,#FFDAC1,#FFB3BA);border-radius:10px;padding:8px 10px;cursor:pointer;border:2px solid transparent;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;">🌸 Personal</div>
+      </div>
+      <input type="hidden" id="evcat" value="personal"/>
+      <input type="hidden" id="evgcal" value="6"/>
+      <input type="hidden" id="evcolor" value="#FFDAC1"/>
+    </div>
     <div class="fg"><label class="fl">Prioridad</label><select class="fin" id="evp"><option value="alta">🟢 Alta</option><option value="media">🟡 Media-Alta</option><option value="mediabaja">🟠 Media-Baja</option><option value="baja">🔴 Baja</option><option value="idea">💡 Idea</option></select></div>
+    <div class="fg">
+      <label class="fl">🔔 Alarma</label>
+      <select class="fin" id="evalarm">
+        <option value="">Sin alarma</option>
+        <option value="0">Al momento del evento</option>
+        <option value="5">5 minutos antes</option>
+        <option value="10">10 minutos antes</option>
+        <option value="15" selected>15 minutos antes</option>
+        <option value="30">30 minutos antes</option>
+        <option value="60">1 hora antes</option>
+        <option value="120">2 horas antes</option>
+        <option value="1440">1 día antes</option>
+      </select>
+    </div>
     <div class="fg"><label class="fl">Notas</label><input class="fin" id="evnote" placeholder="Notas del evento (opcional)"/></div>
-    <div class="mft"><button class="bg" onclick="document.getElementById('evmodal').classList.remove('open')">Cancelar</button><button class="ab" onclick="saveEv()">Guardar ✨</button></div>
+    <div class="mft" style="flex-wrap:wrap;gap:6px;">
+      <button class="bg" onclick="document.getElementById('evmodal').classList.remove('open')">Cancelar</button>
+      <button class="ab" style="background:linear-gradient(135deg,#4285f4,#34a853);" onclick="saveEvAndGCal()">📅 Guardar + Google Cal</button>
+      <button class="ab" onclick="saveEv()">Guardar solo aquí ✨</button>
+    </div>
   </div>
 </div>
 
@@ -769,7 +804,7 @@ function renderDEvs(){
   if(!sel){el.innerHTML='<p style="font-size:11px;color:var(--txt2);">Seleccioná un día en el calendario 📅</p>';return;}
   const key=mk(sel.y,sel.m),evs=(S.events[key]||{})[sel.d]||[];
   if(!evs.length){el.innerHTML='<p style="font-size:11px;color:var(--txt2);">Sin eventos — ¡Agregá uno! ✨</p>';return;}
-  el.innerHTML=evs.map((ev,i)=>`<div class="pi ${ev.p}" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><div class="pd d-${dotMap[ev.p]||'i'}"></div><div><div style="font-size:11px;font-weight:700;">${ev.t}</div>${ev.h?`<div style="font-size:10px;color:var(--txt2);">⏰ ${ev.h}</div>`:''}</div></div><button onclick="rmEv(${sel.d},${i})" style="background:none;border:none;cursor:pointer;color:var(--txt2);font-size:14px;">×</button></div>`).join('');
+  el.innerHTML=evs.map((ev,i)=>`<div class="pi ${ev.p}" style="justify-content:space-between;border-left:3px solid ${ev.color||'var(--p-lavend)'};background:${ev.color||'var(--p-lavend)'}22;"><div style="display:flex;align-items:center;gap:6px;"><div class="pd" style="background:${ev.color||'var(--p-lavend)'};width:8px;height:8px;border-radius:50%;flex-shrink:0;"></div><div><div style="font-size:11px;font-weight:700;">${ev.t}</div>${ev.h?`<div style="font-size:10px;color:var(--txt2);">⏰ ${ev.h}${ev.hend?' → '+ev.hend:''}</div>`:''}</div></div><div style="display:flex;gap:5px;align-items:center;">${ev.alarm?`<span style="font-size:9px;">🔔</span>`:''}<button onclick="rmEv(${sel.d},${i})" style="background:none;border:none;cursor:pointer;color:var(--txt2);font-size:14px;">×</button></div></div>`).join('');
 }
 
 // ═══ DAY PANEL ═══
@@ -791,19 +826,66 @@ function openDP(y,m,d){
 }
 function closeDP(){document.getElementById('dayPanel').classList.remove('open');document.getElementById('dpOverlay').style.display='none';}
 function saveDPNote(){const dkey=mkd(S.dpDay.y,S.dpDay.m,S.dpDay.d);S.dayNotes[dkey]=document.getElementById('dpNote').value;save();}
-function openEvFromDP(){closeDP();document.getElementById('evd').valueAsDate=new Date(S.dpDay.y,S.dpDay.m,S.dpDay.d);document.getElementById('evmodal').classList.add('open');}
-function openEvModal(){const t=td();document.getElementById('evd').valueAsDate=new Date(t.y,t.m,t.d);document.getElementById('evmodal').classList.add('open');}
-
+function selCat(el){
+  document.querySelectorAll('.cat-opt').forEach(o=>o.style.border='2px solid transparent');
+  el.style.border='2px solid #3D2B1F';
+  document.getElementById('evcat').value=el.dataset.cat;
+  document.getElementById('evgcal').value=el.dataset.gcal;
+  document.getElementById('evcolor').value=el.dataset.color;
+}
+function openEvModal(){
+  const t=td();
+  document.getElementById('evd').valueAsDate=new Date(t.y,t.m,t.d);
+  document.getElementById('evmodal').classList.add('open');
+  // select first cat by default
+  const first=document.querySelector('.cat-opt');
+  if(first)selCat(first);
+}
+function openEvFromDP(){
+  closeDP();
+  document.getElementById('evd').valueAsDate=new Date(S.dpDay.y,S.dpDay.m,S.dpDay.d);
+  document.getElementById('evmodal').classList.add('open');
+  const first=document.querySelector('.cat-opt');
+  if(first)selCat(first);
+}
 function saveEv(){
-  const t2=document.getElementById('evt').value.trim(),dv=document.getElementById('evd').value,h=document.getElementById('evh').value,p=document.getElementById('evp').value,note=document.getElementById('evnote').value;
+  const t2=document.getElementById('evt').value.trim(),dv=document.getElementById('evd').value,h=document.getElementById('evh').value,p=document.getElementById('evp').value,note=document.getElementById('evnote').value,cat=document.getElementById('evcat').value,color=document.getElementById('evcolor').value,alarm=document.getElementById('evalarm').value,hend=document.getElementById('evhend').value;
   if(!t2||!dv)return;
   const dt=new Date(dv+'T12:00:00'),y=dt.getFullYear(),m=dt.getMonth(),d=dt.getDate(),key=mk(y,m);
   if(!S.events[key])S.events[key]={};
   if(!S.events[key][d])S.events[key][d]=[];
-  S.events[key][d].push({t:t2,h,p,note});
+  S.events[key][d].push({t:t2,h,hend,p,note,cat,color,alarm});
   document.getElementById('evt').value='';document.getElementById('evnote').value='';
   document.getElementById('evmodal').classList.remove('open');
   renderCal();renderDEvs();save();
+}
+function saveEvAndGCal(){
+  // First save locally
+  const t2=document.getElementById('evt').value.trim(),dv=document.getElementById('evd').value,h=document.getElementById('evh').value,hend=document.getElementById('evhend').value,p=document.getElementById('evp').value,note=document.getElementById('evnote').value,cat=document.getElementById('evcat').value,color=document.getElementById('evcolor').value,alarm=document.getElementById('evalarm').value,gcalColor=document.getElementById('evgcal').value;
+  if(!t2||!dv)return;
+  const dt=new Date(dv+'T12:00:00'),y=dt.getFullYear(),m=dt.getMonth(),d=dt.getDate(),key=mk(y,m);
+  if(!S.events[key])S.events[key]={};
+  if(!S.events[key][d])S.events[key][d]=[];
+  S.events[key][d].push({t:t2,h,hend,p,note,cat,color,alarm});
+  renderCal();renderDEvs();save();
+  // Build Google Calendar URL
+  const dateStr=dv.replace(/-/g,'');
+  let dates='';
+  if(h){
+    const startDT=dateStr+'T'+h.replace(':','')+'00';
+    const endH=hend||h;
+    const endDT=dateStr+'T'+endH.replace(':','')+'00';
+    dates=startDT+'/'+endDT;
+  } else {
+    dates=dateStr+'/'+dateStr;
+  }
+  let gcalUrl=`https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(t2)}&dates=${dates}&details=${encodeURIComponent(note||'')}`;
+  if(alarm) gcalUrl+=`&rem=${alarm}m`;
+  gcalUrl+=`&color=${gcalColor}`;
+  document.getElementById('evt').value='';document.getElementById('evnote').value='';
+  document.getElementById('evmodal').classList.remove('open');
+  window.open(gcalUrl,'_blank');
+  showToast('📅 Abriendo Google Calendar con el evento pre-llenado ✨');
 }
 function rmEv(day,i){const key=mk(S.sd.y,S.sd.m);S.events[key][day].splice(i,1);renderCal();renderDEvs();save();}
 
@@ -863,7 +945,7 @@ function renderWk(){
       const note=S.dayNotes[dkey]||'';
       const isT=dt.getDate()===t.d&&dt.getMonth()===t.m&&dt.getFullYear()===t.y;
       h+=`<td class="wk-cell${isT?' tod':''}" onclick="openDP(${dt.getFullYear()},${dt.getMonth()},${dt.getDate()})">`;
-      evs.forEach(ev=>h+=`<div class="wk-ev">${ev.t}</div>`);
+      evs.forEach(ev=>h+=`<div class="wk-ev" style="background:${ev.color||'var(--p-lavend)'};">${ev.t}</div>`);
       if(hr===8&&note) h+=`<div class="wk-note">${note.slice(0,30)}${note.length>30?'...':''}</div>`;
       h+=`</td>`;
     });
